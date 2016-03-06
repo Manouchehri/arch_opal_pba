@@ -1,0 +1,9 @@
+*.o
+*.a
+build
+sedutil
+.cproject
+.project
+.dep.inc
+.settings
+

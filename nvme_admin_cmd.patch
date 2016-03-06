@@ -1,0 +1,55 @@
+--- sedutil/linux/DtaDevLinuxNvme.h	2016-03-06 15:21:45.318159328 +0100
++++ sedutil/linux/DtaDevLinuxNvmeCorrected.h	2016-03-06 15:21:55.018335803 +0100
+@@ -21,6 +21,52 @@
+ #include "linux/nvme.h"
+ #include "DtaStructures.h"
+ #include "DtaDevLinuxDrive.h"
++#include <stdint.h>
++struct nvme_user_io {
++    uint8_t    opcode;
++    uint8_t    flags;
++    uint16_t   control;
++    uint16_t   nblocks;
++    uint16_t   rsvd;
++    uint64_t   metadata;
++    uint64_t   addr;
++    uint64_t   slba;
++    uint32_t  dsmgmt;
++    uint32_t   reftag;
++    uint16_t  apptag;
++    uint16_t   appmask;
++ };
++
++struct nvme_passthru_cmd {
++uint8_t    opcode;
++uint8_t    flags;
++uint16_t   rsvd1;
++uint32_t   nsid;
++uint32_t   cdw2;
++uint32_t   cdw3;
++uint64_t   metadata;
++uint64_t   addr;
++uint32_t   metadata_len;
++uint32_t   data_len;
++uint32_t   cdw10;
++uint32_t   cdw11;
++uint32_t   cdw12;
++uint32_t   cdw13;
++uint32_t   cdw14;
++uint32_t   cdw15;
++uint32_t   timeout_ms;
++uint32_t    result;
++};
++
++#define nvme_admin_cmd nvme_passthru_cmd
++
++#define NVME_IOCTL_ID           _IO('N', 0x40)
++#define NVME_IOCTL_ADMIN_CMD    _IOWR('N', 0x41, struct nvme_admin_cmd)
++#define NVME_IOCTL_SUBMIT_IO    _IOW('N', 0x42, struct nvme_user_io)
++#define NVME_IOCTL_IO_CMD       _IOWR('N', 0x43, struct nvme_passthru_cmd)
++#define NVME_IOCTL_RESET        _IO('N', 0x44)
++#define NVME_IOCTL_SUBSYS_RESET _IO('N', 0x45)
++
+ 
+ /** Linux specific implementation of DtaDevOS.
+  * Uses the NVMe to send commands to the 

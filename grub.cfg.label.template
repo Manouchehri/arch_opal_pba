@@ -1,0 +1,31 @@
+#!/bin/sh
+LABEL=$1
+INITRD=$2
+
+cat  << EOF
+insmod part_gpt
+insmod part_msdos
+insmod search_fs_uuid
+insmod search_fs_label
+insmod fat
+insmod usb
+
+set default="1"
+set menu_color_normal=light-cyan/black
+set menu_color_highlight=cyan/blue
+
+terminal_input console
+terminal_output gfxterm
+set timeout=2
+
+menuentry 'Arch Linux on adata_ssd' --class archlinux --class gnu-linux --class gnu --class os {
+	set gfxpayload=keep
+	insmod fat
+	#insmod efi_gop
+	#insmod efi_uga
+	search --no-floppy --label ${LABEL} --set=root
+	linux /vmlinuz root=LABEL=${LABEL} libata.allow_tpm=1 quiet ro kernel.printk=4 4 4 4
+	initrd /${INITRD}
+}
+
+EOF

@@ -1,0 +1,18 @@
+#!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+build() {
+    echo opal build
+    add_binary ${DIR}/../build/linuxpba /usr/bin/linuxpba
+    add_binary ${DIR}/../build/sedutil-cli /usr/bin/sedutil-cli
+    add_runscript
+}
+
+help() {
+    cat <<HELPEOF
+This hook provides support for multi-device btrfs volumes. This hook
+is only needed for initramfs images which do not use udev.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
