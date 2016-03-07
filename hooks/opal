@@ -1,8 +1,9 @@
 #!/usr/bin/ash
 
 run_hook() {
-    echo opal run hook
     /usr/bin/linuxpba
+    sync
+    echo b >/proc/sysrq-trigger
 }
 
 # vim: set ft=sh ts=4 sw=4 et:

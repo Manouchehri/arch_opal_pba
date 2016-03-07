@@ -1,11 +1,12 @@
-The purpose of this package is to enable Arch Linux users to use OPAL SED drives. This package generates PBA(Pre Boot Authentification) (Linux-)Image for Arch Linux users 
-This image unlocks the drive and reboots so that the real operating system can be loaded.
+The purpose of this package is to enable Arch Linux users to generate PBA(Pre Boot Authentification) (Linux-)images.
+This image can then be used to unlock OPAL SED drive and reboot so that the real operating system can be loaded.
 
 Required software:
 - linux headers
 - base-devel package on arch linux (gcc, make)
 - git
 - mkinitcpio (will be probably changed in the future)
+- xz for compression (optional, used by default)
 - mtools
 - grub2
 - util-linux(sfdisk, dd)

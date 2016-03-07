@@ -74,7 +74,8 @@ uint8_t UnlockSEDs(char * password)
 		while ((dir = readdir(d)) != NULL)
 		{
 			char devref[16];
-			if (dir->d_name[0] != '.')
+			//if (dir->d_name[0] != '.')
+			if (dir->d_name[0] && dir->d_name[0] == 's' && dir->d_name[1] && dir->d_name[1] == 'd')
 			{
 				snprintf(devref, sizeof(devref), "/dev/%s", dir->d_name);
 				DtaDevGeneric tempDev(devref);

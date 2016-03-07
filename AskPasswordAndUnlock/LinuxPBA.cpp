@@ -33,8 +33,8 @@ int main(int argc, char** argv)
 	{
 		if (UnlockSEDs(pw) == 0)
 		{
+			sleep(6);
 			sync();
-			reboot(RB_AUTOBOOT);
 			return EXIT_SUCCESS;
 		}
 	}
