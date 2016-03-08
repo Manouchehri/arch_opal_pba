@@ -24,7 +24,7 @@ set timeout=2
 menuentry 'Pre Boot Authentification' --class archlinux --class gnu-linux --class gnu --class os {
 	#set gfxpayload=keep
 	search --no-floppy --label ${LABEL} --set=root
-	linux /vmlinuz root=LABEL=${LABEL} libata.allow_tpm=1 quiet ro kernel.printk=4 4 4 4
+	linux /vmlinuz-linux root=LABEL=${LABEL} libata.allow_tpm=1 quiet ro kernel.printk=4 4 4 4
 	initrd /${INITRD}
 }
 

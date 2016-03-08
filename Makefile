@@ -70,7 +70,7 @@ build: $(BUILD_DIR)
 	if [ -d ./build ]; then unlink build; fi
 	ln -s $< $@
 
-sedutil: /usr/bin/patch
+sedutil: /usr/bin/patch /usr/bin/git
 	if [ -d $@ ]; then git -C $@ reset --hard && git -C $@ pull; else  git clone https://github.com/Drive-Trust-Alliance/sedutil.git $@; fi
 	git -C $@ checkout eb1852b0141e1d0b4fbaaea72f1044b9b9c0d814
 	patch -p0 < nvme_admin_cmd.patch
@@ -111,13 +111,13 @@ $(BUILD_DIR)/grub.exe: $(BUILD_DIR)/grub_early.cfg /usr/bin/grub-mkimage
 	#echo using modules $(GRUB_MODULES)
 	grub-mkimage -O x86_64-efi -c $< -o $@ $(GRUB_MODULES)
 
-$(BUILD_DIR)/$(BOOT_PART_NAME): $(BUILD_DIR)/$(INITRD_NAME) $(BUILD_DIR)/grub.exe $(BUILD_DIR)/grub.cfg /usr/bin/dd /usr/bin/mmd /usr/bin/mcopy
+$(BUILD_DIR)/$(BOOT_PART_NAME): $(BUILD_DIR)/$(INITRD_NAME) $(BUILD_DIR)/grub.exe $(BUILD_DIR)/grub.cfg /usr/bin/dd /usr/bin/mmd /usr/bin/mcopy /usr/bin/mkfs.vfat
 	dd if=/dev/zero of=$@ bs=$(SECTOR_SIZE) count=$(BOOT_PART_SIZE_SECTORS)
 	mkfs.vfat -F 32 -n $(PBA_LABEL) -i $(subst -,$(empty),$(PBA_UUID)) $@
 	mmd -i $@ ::/EFI
 	mmd -i $@ ::/EFI/BOOT	
 	mcopy -i $@ $< ::/$(INITRD_NAME)
-	mcopy -i $@ /boot/vmlinuz ::/vmlinuz
+	mcopy -i $@ /boot/vmlinuz-linux ::/vmlinuz-linux
 	mcopy -i $@ $(BUILD_DIR)/grub.exe ::/EFI/BOOT/BOOTX64.EFI
 	# copying grub and its modules
 	mmd -i $@ ::/grub
