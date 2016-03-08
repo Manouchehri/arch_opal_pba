@@ -70,8 +70,8 @@ build: $(BUILD_DIR)
 	if [ -d ./build ]; then unlink build; fi
 	ln -s $< $@
 
-sedutil:
-	if [ -n $@ ]; then git clone https://github.com/Drive-Trust-Alliance/sedutil.git $@; else git -C $@ reset --hard && git -C $@ pull; fi
+sedutil: /usr/bin/patch
+	if [ -d $@ ]; then git -C $@ reset --hard && git -C $@ pull; else  git clone https://github.com/Drive-Trust-Alliance/sedutil.git $@; fi
 	git -C $@ checkout eb1852b0141e1d0b4fbaaea72f1044b9b9c0d814
 	patch -p0 < nvme_admin_cmd.patch
 
@@ -107,11 +107,11 @@ $(BUILD_DIR)/grub_early.cfg: grub_early.cfg.label.template grub_early.cfg.uuid.t
 	    ./grub_early.cfg.uuid.template $(PBA_UUID) > $@ ;\
 	fi
 	
-$(BUILD_DIR)/grub.exe: $(BUILD_DIR)/grub_early.cfg
+$(BUILD_DIR)/grub.exe: $(BUILD_DIR)/grub_early.cfg /usr/bin/grub-mkimage
 	#echo using modules $(GRUB_MODULES)
 	grub-mkimage -O x86_64-efi -c $< -o $@ $(GRUB_MODULES)
 
-$(BUILD_DIR)/$(BOOT_PART_NAME): $(BUILD_DIR)/$(INITRD_NAME) $(BUILD_DIR)/grub.exe $(BUILD_DIR)/grub.cfg
+$(BUILD_DIR)/$(BOOT_PART_NAME): $(BUILD_DIR)/$(INITRD_NAME) $(BUILD_DIR)/grub.exe $(BUILD_DIR)/grub.cfg /usr/bin/dd /usr/bin/mmd /usr/bin/mcopy
 	dd if=/dev/zero of=$@ bs=$(SECTOR_SIZE) count=$(BOOT_PART_SIZE_SECTORS)
 	mkfs.vfat -F 32 -n $(PBA_LABEL) -i $(subst -,$(empty),$(PBA_UUID)) $@
 	mmd -i $@ ::/EFI
@@ -139,7 +139,7 @@ $(BUILD_DIR)/$(BOOT_PART_NAME): $(BUILD_DIR)/$(INITRD_NAME) $(BUILD_DIR)/grub.ex
 #	dd if=/dev/zero of=$@ bs=1 count=$(BOOT_IMAGE_SIZE)
 #	sfdisk $@ < $(BUILD_DIR)/part_layout.txt
 	
-$(BUILD_DIR)/$(BOOT_IMAGE):  $(BUILD_DIR)/$(BOOT_PART_NAME)
+$(BUILD_DIR)/$(BOOT_IMAGE):  $(BUILD_DIR)/$(BOOT_PART_NAME) /usr/bin/sgdisk
 	dd if=/dev/zero of=$@ bs=1 count=$(BOOT_IMAGE_SIZE)
 	sgdisk -Z  $@
 	sgdisk -i128 $@
@@ -147,12 +147,12 @@ $(BUILD_DIR)/$(BOOT_IMAGE):  $(BUILD_DIR)/$(BOOT_PART_NAME)
 	#sgdisk -A 1:set:0 $@ # set some attribute
 	dd conv=notrunc if=$< of=$@ bs=$(SECTOR_SIZE) seek=$(BOOT_PART_OFFSET_SECTORS) count=$(BOOT_PART_SIZE_SECTORS)
 
-install: $(BUILD_DIR)/$(BOOT_IMAGE)
-	sedutil-cli --loadPBAimage $(OPAL_PASS) $< $(OPAL_DRIVE)
-	sedutil-cli --setMBRDone on $(OPAL_PASS) $(OPAL_DRIVE)
-	sedutil-cli --setMBREnable on $(OPAL_PASS) $(OPAL_DRIVE)
+install: $(BUILD_DIR)/$(BOOT_IMAGE) $(BUILD_DIR)/sedutil-cli
+	$(BUILD_DIR)/sedutil-cli --loadPBAimage $(OPAL_PASS) $< $(OPAL_DRIVE)
+	$(BUILD_DIR)/sedutil-cli --setMBRDone on $(OPAL_PASS) $(OPAL_DRIVE)
+	$(BUILD_DIR)/sedutil-cli --setMBREnable on $(OPAL_PASS) $(OPAL_DRIVE)
 
-test: $(BUILD_DIR)/$(BOOT_IMAGE)
+test: $(BUILD_DIR)/$(BOOT_IMAGE) /usr/bin/sudo
 	echo "!!!warning!!! the following operation will overwrite $(TEST_DEVICE)"
 	read -i "<press any key to continue>"
 	sudo dd if=$< of=$(TEST_DEVICE) bs=4096
