@@ -32,7 +32,7 @@ PBA_UUID:=CAFE-0001
 #GRUB_MODULES := $(notdir $(GRUB_MODULES))
 
 #grub modules to integrate 
-GRUB_MODULES := echo normal configfile test nativedisk ehci usb usbms acpi blocklist efi_gop ata ahci part_msdos part_gpt video fat search search_label search_fs_uuid loadenv probe memdisk multiboot linux btrfs usb_keyboard
+GRUB_MODULES := ls cat echo cmp extcmd normal configfile test nativedisk ehci usb usbms acpi blocklist efi_gop efi_uga ata ahci part_msdos part_gpt video fat search search_label search_fs_uuid loadenv probe memdisk multiboot linux btrfs usb_keyboard gfxterm
 
 # set this to your opal device for use with "make install"
 OPAL_DRIVE=/dev/sde
@@ -63,7 +63,7 @@ all: $(BUILD_DIR)/$(BOOT_IMAGE)
 	@echo "BOOT_PART_OFFSET_SECTORS $(BOOT_PART_OFFSET_SECTORS), BOOT_PART_SIZE_SECTORS $(BOOT_PART_SIZE_SECTORS)"
 	@echo "BOOT_IMAGE_SIZE_SECTORS $(BOOT_IMAGE_SIZE_SECTORS)"
 
-$(BUILD_DIR):
+$(BUILD_DIR): Makefile
 	mkdir -p $@
 
 build: $(BUILD_DIR)
@@ -71,7 +71,9 @@ build: $(BUILD_DIR)
 	ln -s $< $@
 
 sedutil:
-	if [ -n sedutil ]; then git clone https://github.com/Drive-Trust-Alliance/sedutil.git sedutil && patch -p0 < nvme_admin_cmd.patch ; else git -C sedutil pull; fi
+	if [ -n $@ ]; then git clone https://github.com/Drive-Trust-Alliance/sedutil.git $@; else git -C $@ reset --hard && git -C $@ pull; fi
+	git -C $@ checkout eb1852b0141e1d0b4fbaaea72f1044b9b9c0d814
+	patch -p0 < nvme_admin_cmd.patch
 
 # uncomment the following lines to use the stock linuxpba
 #$(BUILD_DIR)/linuxpba: sedutil $(BUILD_DIR)
@@ -89,7 +91,7 @@ $(BUILD_DIR)/sedutil-cli: sedutil $(BUILD_DIR)
 $(BUILD_DIR)/$(INITRD_NAME): build $(BUILD_DIR)/sedutil-cli $(BUILD_DIR)/linuxpba opalcpio.conf
 	./mkinitcpio -c opalcpio.conf -g $@
 
-$(BUILD_DIR)/grub.cfg:
+$(BUILD_DIR)/grub.cfg: grub.cfg.label.template grub.cfg.uuid.template
 	if [ -n "$(PBA_USE_LABEL)" ]; \
 	then \
 	    ./grub.cfg.label.template $(PBA_LABEL) $(INITRD_NAME) > $@ ;\
@@ -97,7 +99,7 @@ $(BUILD_DIR)/grub.cfg:
 	    ./grub.cfg.uuid.template $(PBA_UUID)   $(INITRD_NAME) > $@ ;\
 	fi
 
-$(BUILD_DIR)/grub_early.cfg:
+$(BUILD_DIR)/grub_early.cfg: grub_early.cfg.label.template grub_early.cfg.uuid.template
 	if [ -n "$(PBA_USE_LABEL)" ]; \
 	then \
 	    ./grub_early.cfg.label.template $(PBA_LABEL) > $@ ;\
@@ -151,10 +153,11 @@ install: $(BUILD_DIR)/$(BOOT_IMAGE)
 	sedutil-cli --setMBREnable on $(OPAL_PASS) $(OPAL_DRIVE)
 
 test: $(BUILD_DIR)/$(BOOT_IMAGE)
-	read -i "!!!warning!!! this will overwrite $(TEST_DEVICE)"
+	echo "!!!warning!!! the following operation will overwrite $(TEST_DEVICE)"
+	read -i "<press any key to continue>"
 	sudo dd if=$< of=$(TEST_DEVICE) bs=4096
 	sync
 
 clean: 
-	rm -rf $(BUILD_DIR) build
+	rm -rf $(BUILD_DIR) build sedutil
 

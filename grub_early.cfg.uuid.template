@@ -11,6 +11,7 @@ insmod ahci
 insmod part_gpt
 insmod part_msdos
 insmod fat
+insmod gfxterm
 search.uuid ${UUID} root
 if [ -e /grub/grub.cfg ]; then
 	set prefix=($root)/grub

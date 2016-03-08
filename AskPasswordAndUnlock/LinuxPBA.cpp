@@ -33,7 +33,6 @@ int main(int argc, char** argv)
 	{
 		if (UnlockSEDs(pw) == 0)
 		{
-			sleep(6);
 			sync();
 			return EXIT_SUCCESS;
 		}

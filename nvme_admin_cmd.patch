@@ -4,6 +4,7 @@
  #include "linux/nvme.h"
  #include "DtaStructures.h"
  #include "DtaDevLinuxDrive.h"
++#ifndef NVME_IOCTL_ADMIN_CMD
 +#include <stdint.h>
 +struct nvme_user_io {
 +    uint8_t    opcode;
@@ -19,7 +20,6 @@
 +    uint16_t  apptag;
 +    uint16_t   appmask;
 + };
-+
 +struct nvme_passthru_cmd {
 +uint8_t    opcode;
 +uint8_t    flags;
@@ -49,7 +49,7 @@
 +#define NVME_IOCTL_IO_CMD       _IOWR('N', 0x43, struct nvme_passthru_cmd)
 +#define NVME_IOCTL_RESET        _IO('N', 0x44)
 +#define NVME_IOCTL_SUBSYS_RESET _IO('N', 0x45)
-+
++#endif
  
  /** Linux specific implementation of DtaDevOS.
   * Uses the NVMe to send commands to the 
